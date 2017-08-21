@@ -14,12 +14,14 @@ replay_buffer = []
 num_actions = env.action_space.n
 
 def add_state(S):
-	Q_table[S] = {}
-	for i in range(num_actions):
-	    Q_table[S][i] = -1 #np.random.uniform(0, 1.0)
+    global Q_table
+    Q_table[S] = {}
+    for i in range(num_actions):
+	Q_table[S][i] = -1 #np.random.uniform(0, 1.0)
     
 
 def action(S, env):
+    global Q_table
     if S not in Q_table.keys():
 	add_state(S) 
     
@@ -31,12 +33,11 @@ def action(S, env):
     return act 
 
 def Q(S, a, r, S_):
-    # TODO:
-    #	-Take out args, just sample from replay randomly
-    #	-double check bellman eq correct    
-    
-	#Q_table[S][a] = r + 0.99*(max(Q_table[S_].values()) - Q_table[S][a])
-	Q_table[S][a] = 0.01 * Q_table[S][a] + 0.99 * (r + 0.99 * max(Q_table[S_].values()))
+   # TODO:
+   #	-Take out args, just sample from replay randomly
+    global Q_table
+    #Q_table[S][a] = r + 0.99*(max(Q_table[S_].values()) - Q_table[S][a])
+    Q_table[S][a] = (0.01 * Q_table[S][a]) + (0.99 * (r + 0.99 * max(Q_table[S_].values())))
 
 for i in range(200):
     S = str(env.reset().round(2))
