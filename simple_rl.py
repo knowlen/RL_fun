@@ -1,7 +1,7 @@
 # a: Nick Knowles
 # d: 8/21
 # Some basic openai gym use & Q learning for general reference. 
-# -maybe play aroun w/ policy iteration here some day if time?
+# -maybe play around w/ policy iteration here some day if time?
 
 import numpy as np
 import gym
