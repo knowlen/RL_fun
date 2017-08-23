@@ -20,10 +20,7 @@ num_actions = env.action_space.n
 
 def add_state(S):
     global Q_table
-    Q_table[S] = {}
-    for i in range(num_actions):
-	Q_table[S][i] = -1 #np.random.uniform(0, 1.0)
-    
+    Q_table[S] = [-1 for i in range(num_actions)]
 
 def action(S, env):
     global Q_table, exploration_rate
@@ -31,10 +28,11 @@ def action(S, env):
 	add_state(S) 
     
     action_list = Q_table[S].values()
-    act = env.action_space.sample()
     if np.random.uniform(0, 1.0) >= exploration_rate:
 	v = max(action_list)
 	act = action_list.index(v)
+    else:
+        act = env.action_space.sample()
     return act 
 
 #def Q(S, a, r, S_, done):
@@ -44,10 +42,16 @@ def Q(batch):
    # TODO:
    #	-Batching
     global Q_table
-    S, a, r, S_, T = 0, 1, 2, 3, 4
-    Qs = [Q_table.get(state)[action] for state,action in batch[:,S], batch[:,a]]
-    Q_s = [max(Q_table[state]) for state,action in batch[:,S]]
-    updated_Qs = ((1-learn_rate) * Qs) + (learn_rate) * (batch[:,r] + discount_factor * max(Q_table[S_].values())))
+    S, a, r, S_, T = batch[:,0], batch[:,1], batch[:,2], batch[:,3], batch[:,4], 
+    Qs = [Q_table.get(state)[action] for state,action in S, a]
+    Q_s = [max(Q_table[state]) for state in S_]
+    updated_Q = ((1-learn_rate) * Qs) + (learn_rate) * (r + (discount_factor * max(Q_table[S_])))
+    for i, action in enumerate(a):
+        state, terminal, new_value, reward = S[i], T[i], updated_Q[i], r[i]
+        if terminal:
+            Q_table[state][action] = reward
+        else:
+            Q_table[state][action] = new_value
 
     #Q_table[S][a] = ((1-learn_rate) * Q_table[S][a]) + (learn_rate) * (r + discount_factor * max(Q_table[S_].values())))
 
@@ -78,5 +82,6 @@ for i in range(200):
 	S = S_
         if done:
 	    print('Ep' + str(i) + ': ' + str(t) + ' steps.')
+            exploration_rate *= 0.99
             break
 
