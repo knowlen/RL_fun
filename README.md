@@ -1,7 +1,7 @@
 ## Papers
 
-*(actual DQN paper)
-https://www.nature.com/nature/journal/v518/n7540/pdf/nature14236.pdf
+        (actual DQN paper)
+        https://www.nature.com/nature/journal/v518/n7540/pdf/nature14236.pdf
 
         -multiagent stuff:
         https://arxiv.org/abs/1511.06581
