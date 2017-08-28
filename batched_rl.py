@@ -10,18 +10,19 @@ from collections import deque
 env = gym.make('CartPole-v0')
 
 """ HYPERPARAMETERS """
-mb_size = 128
-discount_factor = 0.99 # static enviornment (cartpole)
-use_buckets = True
-
+mb_size = 32 
+discount_factor = 0.99   # static enviornment -cartpole
 
 Q_table = {}
-replay_buffer = deque(maxlen=200)
+replay_buffer = deque(maxlen=1000)
 num_actions = env.action_space.n
-angle_bins = [-0.3, -0.15, 0.0, 0.15, 0.3] 
-a_veloc_bins = [-0.87, 0, 0.87]
-x_veloc_bins = [-0.5, 0, 0.5]
-x_bins = [-3, 0, 3]
+
+""" DISCRETE BINS FOR STATES """
+angle_bins = [-0.25, -0.15, 0.0, 0.15, 0.25] 
+a_veloc_bins = [-0.87, 0.87]
+x_veloc_bins = [-0.5, 0.5]
+x_bins = [0]
+
 
 def add_state(S):
     """
@@ -59,42 +60,43 @@ def Q(batch):
     
     #updated_Q = ((1.0-learn_rate) * Qs) + learn_rate * ((discount_factor * Q_s) + r) 
     updated_Q = Qs + (learn_rate * (r + discount_factor * Q_s - Qs))
-    for i, action in enumerate(a):
-        state, terminal, new_value, reward = S[i], T[i], updated_Q[i], r[i]
+    for action, state, terminal, new_value, reward in zip(a, S, T, updated_Q, r):
+        #state, terminal, new_value, reward = S[i], T[i], updated_Q[i], r[i]
         #if terminal:
-        #    Q_table[state][int(action)] = reward
+        #    Q_table[state][int(action)] = (1-learn_rate * Qs[i]) + (learn_rate * reward)
         #else:
         Q_table[state][int(action)] = new_value
 
 
+def bin_state(S):
+    S[0] = np.digitize(S[0], x_bins)
+    S[1] = np.digitize(S[1], x_veloc_bins)
+    S[2] = np.digitize(S[2], angle_bins)
+    S[3] = np.digitize(S[3], a_veloc_bins)
+    return S
+
+
     """ TRAINING LOOP """
-for i in range(1000):
+"""
+::  -Optimal policy is achieved when the bot can reach 200 
+::   steps 100 times in a row. 
+"""
+streak = 0
+i = 1.0
+while(streak < 100):
     # note: discarded observation[0], it is just 
     #       the x position -scales poorly w/ Q table && 
     #       doesn't have a stong enough correlation 
     #       to success or failure in the env. 
-    S = env.reset()[1:]
-    S[0] = np.digitize(S[0], x_bins)
-    S[-1] = np.digitize(S[-1], a_veloc_bins)
-    S[-2] = np.digitize(S[-2], angle_bins)
-    S[-3] = np.digitize(S[-3], x_veloc_bins)
-
-    S = str(S)
+    S = str(bin_state(env.reset())
     add_state(S)
-    learn_rate = max(0.1, min(1.0 - math.log10((i + 1.0)/25.0), 0.5))	
-    exploration_rate = max(0.01, min(1.0 - math.log10((i + 1.0)/25.0), 1.0))	
-    for t in range(1000):
+    learn_rate = max(0.1, min(1.0 - math.log10((i)/25.0), 0.5))	
+    exploration_rate = max(0.01, min(1.0 - math.log10((i)/25.0), 1.0))	
+    for t in range(201):
     	a = action(S) 
 	S_, r, done, info = env.step(a)
         env.render()
-
-        # fix the types & bin the angle 
-        S_[0] = np.digitize(S_[0], x_bins)
-        S_[-1] = np.digitize(S_[-1], x_veloc_bins)
-        S_[-2] = np.digitize(S_[-2], angle_bins)
-        S_[-3] = np.digitize(S_[-3], a_veloc_bins)
-        S_ = str(S_)
-        #print S_
+        S_ = str(bin_state(S_))
         r = float(r)
 
         # add the experience tuple to memory, 
@@ -105,13 +107,22 @@ for i in range(1000):
 	    add_state(S_)
 
         # once there are enough things to batch over,
+        # start learning:
         if mb_size <= len(replay_buffer):
 	    batch = np.asarray(random.sample(replay_buffer, mb_size))
             Q(batch)
         env.render()
 	S = S_
         if done:
+            # check if converged to optimal policy
             env.render()
 	    print('Ep' + str(i) + ': ' + str(t) + ' steps.')
+            if t >= 100:
+                streak += 1
+            else:
+                streak = 0
+            i += 1
             break
 
+# optimal policy reached:
+print "Completed in " + str(i) + " episodes."
