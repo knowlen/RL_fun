@@ -62,10 +62,7 @@ exploration_rate = 0.99
 
 """ TRAINING LOOP  """
 for episode in range(1, 2000):
-    learn_rate = max(0.1, min(1.0 - math.log10(episode/25.0), 0.5))
-    exploration_rate = max(0.01, min(1.0 - math.log10(episode/25.0), 1.0))
     S = str(bin_state(env.reset()))
-
     for t in range(200):
         # Create new row for S if needed
 	if S not in Q_table.keys():
@@ -83,8 +80,8 @@ for episode in range(1, 2000):
         # Update the Q table
         Q(S, a, r, S_)
 	S = S_
-
         if done:
+            # (Dropped the pole...)
 	    print('Ep' + str(episode) + ': ' + str(t) + ' steps.')
             break
 
@@ -95,3 +92,6 @@ for episode in range(1, 2000):
     #Q_table[S][a] = r + 0.99*(max(Q_table[S_].values()) - Q_table[S][a])
     #Q_table[S][a] = (0.01 * Q_table[S][a]) + (0.99 * (r + 0.99 * max(Q_table[S_].values())))
  
+ #learn_rate = max(0.1, min(1.0 - math.log10(episode/25.0), 0.5))
+    #exploration_rate = max(0.01, min(1.0 - math.log10(episode/25.0), 1.0))
+
