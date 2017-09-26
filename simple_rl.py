@@ -23,10 +23,14 @@ def add_state(S):
     global Q_table
     Q_table[S] = {}
     for i in range(num_actions):
-	Q_table[S][i] = -1 #np.random.uniform(0, 1.0)
+	Q_table[S][i] = -1 
     
 
-def action(S):
+def policy(S):
+    """ 
+    Either return action with highest value
+    given state S, or a random action.
+    """
     global Q_table
     if S not in Q_table.keys():
 	add_state(S) 
@@ -40,8 +44,6 @@ def action(S):
 
 def Q(S, a, r, S_):
     global Q_table
-    #Q_table[S][a] = r + 0.99*(max(Q_table[S_].values()) - Q_table[S][a])
-    #Q_table[S][a] = (0.01 * Q_table[S][a]) + (0.99 * (r + 0.99 * max(Q_table[S_].values())))
     old_Q = Q_table[S][a]
     new_Q = max(Q_table[S_].values()) 
     Q_table[S][a] += (learn_rate * (r + discount_factor * new_Q - old_Q))
@@ -59,27 +61,37 @@ learn_rate = 0.01
 exploration_rate = 0.99
 
 """ TRAINING LOOP  """
-for i in range(2000):
-
-    learn_rate = max(0.1, min(1.0 - math.log10(float(i+1.0)/25.0), 0.5))
-    exploration_rate = max(0.01, min(1.0 - math.log10(float(i+1.0)/25.0), 1.0))
-   # exploration_rate = max(0.1, exploration_rate * 0.99)
+for episode in range(1, 2000):
+    learn_rate = max(0.1, min(1.0 - math.log10(episode/25.0), 0.5))
+    exploration_rate = max(0.01, min(1.0 - math.log10(episode/25.0), 1.0))
     S = str(bin_state(env.reset()))
 
     for t in range(200):
-        env.render()
-         
+        # Create new row for S if needed
 	if S not in Q_table.keys():
 	    add_state(S)
-	
-	a = action(S)
+        
+        # Select an action and execute it in the environment   
+	a = policy(S)
 	S_, r, done, info = env.step(a)
-        env.render()
 	S_ = str(bin_state(S_))
-	if S_ not in Q_table.keys():
+	
+        # Create new row for S' if needed
+        if S_ not in Q_table.keys():
 	    add_state(S_)
-	Q(S, a, r, S_)
+
+        # Update the Q table
+        Q(S, a, r, S_)
 	S = S_
+
         if done:
-	    print('Ep' + str(i) + ': ' + str(t) + ' steps.')
+	    print('Ep' + str(episode) + ': ' + str(t) + ' steps.')
             break
+
+
+
+
+#testing
+    #Q_table[S][a] = r + 0.99*(max(Q_table[S_].values()) - Q_table[S][a])
+    #Q_table[S][a] = (0.01 * Q_table[S][a]) + (0.99 * (r + 0.99 * max(Q_table[S_].values())))
+ 
