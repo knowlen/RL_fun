@@ -88,7 +88,7 @@ while(streak < 100):
     #       the x position -scales poorly w/ Q table && 
     #       doesn't have a stong enough correlation 
     #       to success or failure in the env. 
-    S = str(bin_state(env.reset())
+    S = str(bin_state(env.reset()))
     add_state(S)
     learn_rate = max(0.1, min(1.0 - math.log10((i)/25.0), 0.5))	
     exploration_rate = max(0.01, min(1.0 - math.log10((i)/25.0), 1.0))	

@@ -61,9 +61,9 @@ exploration_rate = 0.99
 """ TRAINING LOOP  """
 for i in range(2000):
 
-   # learn_rate = max(0.1, min(1.0 - math.log10(float(i)/25.0), 0.5))
-   # exploration_rate = max(0.01, min(1.0 - math.log10(float(i)/25.0), 1.0))
-    exploration_rate = max(0.1, exploration_rate * 0.99)
+    learn_rate = max(0.1, min(1.0 - math.log10(float(i+1.0)/25.0), 0.5))
+    exploration_rate = max(0.01, min(1.0 - math.log10(float(i+1.0)/25.0), 1.0))
+   # exploration_rate = max(0.1, exploration_rate * 0.99)
     S = str(bin_state(env.reset()))
 
     for t in range(200):

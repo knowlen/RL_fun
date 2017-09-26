@@ -7,7 +7,7 @@
 #   -missing significant components from the 
 #    the literature, namely a target network, ddqn,
 #    exploration decay, and loss clipping.
-
+from PIL import Image
 import math
 import numpy as np
 import random
@@ -24,19 +24,19 @@ mb_size = 128
 discount_factor = 0.99   # static enviornment -cartpole
 
 Q_table = {}
-replay_buffer = deque(maxlen=100000)
+replay_buffer = deque(maxlen=10000)
 num_actions = env.action_space.n
 state_dim = 4
 
 
 def dnn(input_layer, num_units=50, num_layers=2):
-    h = Dense(num_units, activation='tanh', bias_initializer='random_uniform')(input_layer)
+    hidden_layer = Dense(num_units, activation='tanh', bias_initializer='random_uniform')(input_layer)
     for i in range(0, num_layers):
-        h = Dense(num_units, activation='tanh', 
+        hidden_layer = Dense(num_units, activation='tanh', 
                   kernel_initializer='random_uniform', 
-                  bias_initializer='random_uniform')(h)
+                  bias_initializer='random_uniform')(hidden_layer)
     output_layer = Dense(num_actions, bias_initializer='random_uniform', 
-                         activation='linear')(h)
+                         activation='linear')(hidden_layer)
     return output_layer;
 
 input_layer = tf.placeholder(tf.float32, shape=(None, state_dim))
@@ -59,15 +59,22 @@ init = tf.global_variables_initializer()
 sess = tf.Session()
 sess.run(init)
 streak = 0
-ep = 0.0
+ep = 1.0
 exploration_rate = 0.99
+learn_rate = 0.9
+frames = []
 with sess.as_default():
-    while streak < 100:
+    while streak < 1:
         S = env.reset()
-        #learn_rate = max(0.1, min(1.0 - math.log10((i)/25.0), 0.5))	
+        learn_rate = max(0.1, min(1.0 - math.log10((float(ep))/25.0), 0.5))	
 
+        env.render()
         exploration_rate *= max(0.1, exploration_rate*0.99) #max(0.01, min(1.0 - math.log10((ep)/25.0), 1.0))	
         for t in xrange(200):
+            env.render()
+            
+            frames.append(Image.fromarray(env.render(mode='rgb_array')))  # save each frames
+            
             if np.random.uniform(0, 1.0) >= exploration_rate:
                 a = sess.run(outputs, feed_dict={input_layer:S.reshape(1,4)}).argmax()
             else:
@@ -77,6 +84,7 @@ with sess.as_default():
             replay_buffer.append([S, a, float(r), S_, done])
             S = S_
 
+            env.render()
             if len(replay_buffer) > mb_size:
                 batch = random.sample(replay_buffer, mb_size)
                 batch_S = np.array([row[0] for row in batch])
@@ -90,18 +98,21 @@ with sess.as_default():
                 label_vec = Qvec
                 for ind,a in enumerate(actions):
                     label_vec[ind][a] = Qnext[ind]
-                
+                 
                 _ = sess.run(train_step, feed_dict={input_layer:batch_S, labels:label_vec})
-            
             if done:
                 env.render()
                 print('Ep' + str(int(ep)) + ': ' + str(t) + ' steps.')
                 if t >= 100:
+                    make_gif()
                     streak += 1
                 else:
                     streak = 0
                 ep +=1.0
                 break
 
-
-
+def make_gif():
+    with open('./test.gif', 'wb') as f:  # change the path if necessary
+        im = Image.new('RGB', frames[0].size)
+        im.save(f, save_all=True, append_images=frames)
+    
