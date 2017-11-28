@@ -139,3 +139,4 @@ for episode in range(1, 2000):
     #Q_table[S][a] = (0.01 * Q_table[S][a]) + (0.99 * (r + 0.99 * max(Q_table[S_].values())))
  
  
+ 
