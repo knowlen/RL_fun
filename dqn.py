@@ -1,4 +1,4 @@
-# a: Nick Knowles
+# a: Nick Knowles 
 # d: 8/21
 #   (WIP) 
 # -A hacky implementation of deep Q learning 
