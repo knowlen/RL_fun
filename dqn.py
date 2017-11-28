@@ -116,3 +116,5 @@ def make_gif():
         im = Image.new('RGB', frames[0].size)
         im.save(f, save_all=True, append_images=frames)
     
+ 
+ 
